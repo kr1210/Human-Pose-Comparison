@@ -196,7 +196,7 @@ model_image_frame = cv2.imread(model_image)
 model_points,model_drawn_image,model_black_image = getpoints(model_image_frame,1)
 model_drawn_image = cv2.cvtColor(model_drawn_image, cv2.COLOR_BGR2RGB)
 model_roi, model_new_coords = roi(model_points,model_drawn_image)
-cap = cv2.VideoCapture("alwin_punch_2.mp4")
+cap = cv2.VideoCapture("kr_punch_2.mp4")
 totalframe = cap.get(cv2.CAP_PROP_FRAME_COUNT)
 for_plot=np.zeros((int(totalframe),2480,3840,3),dtype='uint8') 
 i = 0
@@ -239,6 +239,8 @@ while cap.isOpened():
 		plt.ylabel("Score")
 		plt.plot(time1,ts)
 		#plt.canvas.draw()
+		plt.tight_layout()
+
 
 		#plt.show()
 		plt.savefig('test_plot.png')
@@ -264,7 +266,7 @@ while cap.isOpened():
 		break
 cap.release()
 
-create_gif(for_plot,ts, 'test_19.mp4', title_str='Cumulative Score :: ')
+create_gif(for_plot,ts, 'test_kr.mp4', title_str='Cumulative Score :: ')
 
 
 
