@@ -41,7 +41,7 @@ def bounding_box(coords):
 
 	return [(int(min_x),int(min_y)),(int(max_x),int(min_y)),(int(max_x),int(max_y)),(int(min_x),int(max_y))]
 
-def getpoints(image_input,flag):
+def getpoints(image_input,flag,model_black_image):
 
 	with tf.Session() as sess:
 		model_cfg, model_outputs = posenet.load_model(101, sess)
@@ -75,9 +75,16 @@ def getpoints(image_input,flag):
 		
 		black_image = numpy.zeros((draw_image.shape[0],draw_image.shape[1],3),dtype='uint8')
 		
-		black_image = posenet.draw_skel_and_kp(flag,
-			black_image, pose_scores, keypoint_scores, keypoint_coords,
-			min_pose_score=0.1, min_part_score=0.0001)
+		if flag ==1:
+
+			black_image = posenet.draw_skel_and_kp(flag,
+				black_image, pose_scores, keypoint_scores, keypoint_coords,
+				min_pose_score=0.1, min_part_score=0.0001)
+		if flag ==0:
+			black_image = posenet.draw_skel_and_kp(flag,
+				model_black_image, pose_scores, keypoint_scores, keypoint_coords,
+				min_pose_score=0.1, min_part_score=0.0001)
+
 			
 		for pi in range(len(pose_scores)):
 			if pose_scores[pi] == 0.:
@@ -193,12 +200,18 @@ fig = plt.figure()
 
 model_image = "model_punch.png"
 model_image_frame = cv2.imread(model_image)
-model_points,model_drawn_image,model_black_image = getpoints(model_image_frame,1)
+model_points,model_drawn_image,model_black_image = getpoints(model_image_frame,1,None)
 model_drawn_image = cv2.cvtColor(model_drawn_image, cv2.COLOR_BGR2RGB)
 model_roi, model_new_coords = roi(model_points,model_drawn_image)
-cap = cv2.VideoCapture("kr_punch_2.mp4")
+cap = cv2.VideoCapture("alwin_punch_2.mp4")
 totalframe = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-for_plot=np.zeros((int(totalframe),2480,3840,3),dtype='uint8') 
+for_plot=np.zeros((int(totalframe),4180,7888,3),dtype='uint8')
+model_black_image = cv2.resize(model_black_image,(230,330))
+black_image_horizontal = numpy.zeros((330,72,3),dtype='uint8')
+black_image_vertical = numpy.zeros((95,302,3), dtype='uint8') 
+temp2 = np.concatenate((black_image_horizontal,model_black_image),axis = 1)
+temp3 = np.concatenate((black_image_vertical,temp2), axis = 0)
+
 i = 0
 ts = []
 time1 = []
@@ -206,14 +219,17 @@ if cap.isOpened() is False:
 	print("error in opening video")
 while cap.isOpened():
 	ret_val, image = cap.read()
-	#if i<10:
-	if ret_val:
+	if i<90:
+	#if ret_val:
 		start = time.time()
 		
 	
 		image = cv2.resize(image,(372,495))
+		
+		model_black_image_crop = temp3[0:int(model_black_image.shape[0]), 17:int(model_black_image.shape[1])]
+		
 		#model_points,model_drawn_image = getpoints(model_image)
-		input_points,input_drawn_image, input_black_image = getpoints(image,0)
+		input_points,input_drawn_image, input_black_image = getpoints(image,0,model_black_image_crop)
 		input_roi, input_new_coords = roi(input_points,input_drawn_image)
 
 		#print(model_new_coords)
@@ -249,12 +265,12 @@ while cap.isOpened():
 
 		temp = []
 
-		crop_img = input_black_image[80:int(input_black_image.shape[0])-70, 0:int(input_black_image.shape[1])-30]
-		model_black_image = cv2.resize(model_black_image, (960,1280))
-		plot = cv2.resize(plot, (3840,1200))
-		model_drawn_image = cv2.resize(model_drawn_image, (960, 1280))
-		input_black_image = cv2.resize(crop_img, (960, 1280))
-		input_drawn_image = cv2.resize(input_drawn_image, (960, 1280))
+		#crop_img = input_black_image[80:int(input_black_image.shape[0])-70, 0:int(input_black_image.shape[1])-30]
+		model_black_image = cv2.resize(model_black_image, (1972,2980))
+		plot = cv2.resize(plot, (7888,1200))
+		model_drawn_image = cv2.resize(model_drawn_image, (1972,2980))
+		input_black_image = cv2.resize(input_black_image, (1972,2980))
+		input_drawn_image = cv2.resize(input_drawn_image, (1972,2980))
 		# model_drawn_image = cv2.cvtColor(model_drawn_image, cv2.COLOR_BGR2RGB)
 		input_drawn_image = cv2.cvtColor(input_drawn_image, cv2.COLOR_BGR2RGB)
 		print(input_drawn_image.shape)
@@ -266,7 +282,7 @@ while cap.isOpened():
 		break
 cap.release()
 
-create_gif(for_plot,ts, 'test_kr.mp4', title_str='Cumulative Score :: ')
+create_gif(for_plot,ts, 'test_kr_imposed3.mp4', title_str='Cumulative Score :: ')
 
 
 
